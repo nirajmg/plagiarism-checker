@@ -1,47 +1,48 @@
 VERSION=v1
-PROJECT=lab5-364722
-DOCKERUSER=us-west3-docker.pkg.dev/lab5-364722/lab7
-CLUSTER=cluster-1
-REGION=us-west3-a
+PROJECT_ID=plagiarism-368919
+PROJECT_NUMBER=$(shell gcloud projects list --filter="project_id:$(PROJECT_ID)" --format='value(project_number)')
+SERVICE_ACCOUNT=$(shell gsutil kms serviceaccount -p $(PROJECT_NUMBER))
 
-all: login
 
-build: build-rest build-worker
+BUCKET=plagiarism-ingestion
+CLOUD_FUNC_NAME=storage-trigger-function
+TOPIC=plagiarism-tasks
+CLUSTER=plagiarism-cluster
+REGION=us-west3
 
-build-worker:
-	cd worker && gcloud builds submit --tag $(DOCKERUSER)/demucs-worker .
-
-build-rest:
-	cd rest && gcloud builds submit --tag $(DOCKERUSER)/demucs-rest .
+all: login clean build infra
 
 login:
-	gcloud container clusters get-credentials $(CLUSTER) --zone $(REGION) --project $(PROJECT)
+	gcloud auth login && gcloud config set project $(PROJECT_ID)
 
-infra: deploy-secret deploy-redis deploy-rest deploy-worker deploy-logs
+build: build-cloudfunc
 
-deploy-redis:
-	kubectl apply -f redis/
+infra: deploy-bucket deploy-cloudfunc deploy-pubsub
 
-deploy-rest: 
-	kubectl apply -f rest/infra/
+build-cloudfunc:
+	cd functions/storage && pip3 install -r requirements.txt 
 
-deploy-worker:
-	kubectl apply -f worker/infra/
+deploy-bucket:
+	gsutil mb -l $(REGION) gs://$(BUCKET)
+	gcloud projects add-iam-policy-binding $(PROJECT_ID) \
+	--member serviceAccount:$(SERVICE_ACCOUNT) \
+	--role roles/pubsub.publisher --role roles/eventarc.eventReceiver
 
-deploy-logs:
-	kubectl apply -f logs/
+deploy-cloudfunc:
+	gcloud functions deploy $(CLOUD_FUNC_NAME) --gen2 \
+	--runtime=python310 \
+	--region=$(REGION) \
+	--source=./functions/storage \
+	--entry-point=process_trigger \
+	--trigger-event-filters="type=google.cloud.storage.object.v1.finalized" \
+	--trigger-event-filters="bucket=$(BUCKET)"
 
-deploy-secret:
-	kubectl create secret generic credentials --from-env-file .env
+deploy-pubsub:
+	gcloud pubsub topics create $(TOPIC) --message-retention-duration=1d
 
-lb:
-	gcloud container clusters update $(CLUSTER) --update-addons=HttpLoadBalancing=ENABLED  --zone $(REGION)
 
-requirements:
-	cd worker && python3 -m pigar -p requirements.txt -P .
-	cd rest && python3 -m pigar -p requirements.txt -P .
+clean:
+	gcloud storage rm --recursive gs://$(BUCKET)/
+	gcloud pubsub topics delete $(TOPIC)
+	gcloud functions delete $(CLOUD_FUNC_NAME) --gen2 --region=$(REGION)
 
-port-forward:
-	kubectl port-forward --address 0.0.0.0 service/redis 6379:6379 &
-	kubectl port-forward -n minio-ns --address 0.0.0.0 service/minio-proj 9000:9000 &
-	kubectl port-forward -n minio-ns --address 0.0.0.0 service/minio-proj 9001:9001 &
