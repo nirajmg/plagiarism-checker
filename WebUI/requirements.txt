@@ -1,0 +1,5 @@
+Flask
+jsonpickle
+requests
+google-cloud
+google-cloud-storage
