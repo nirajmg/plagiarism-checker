@@ -22,6 +22,9 @@ infra: deploy-bucket deploy-cloudfunc deploy-pubsub
 build-cloudfunc:
 	cd functions/storage && pip3 install -r requirements.txt 
 
+build-frontend:
+	cd services/WebUI && pip3 install -r requirements.txt 
+
 deploy-bucket:
 	gsutil mb -l $(REGION) gs://$(BUCKET)
 	gcloud projects add-iam-policy-binding $(PROJECT_ID) \
@@ -45,4 +48,9 @@ clean:
 	gcloud storage rm --recursive gs://$(BUCKET)/
 	gcloud pubsub topics delete $(TOPIC)
 	gcloud functions delete $(CLOUD_FUNC_NAME) --gen2 --region=$(REGION)
+	helm delete postgresql
 
+helm:
+	helm install postgresql infra/postgresql
+	# all services will be deployed here 
+	

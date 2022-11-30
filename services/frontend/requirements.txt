@@ -3,3 +3,4 @@ jsonpickle
 requests
 google-cloud
 google-cloud-storage
+flask_sqlalchemy
