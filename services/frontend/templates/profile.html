@@ -3,5 +3,11 @@
 {% block content %}
 <h1 class="title">
   Welcome!
+  <form method="post" enctype="multipart/form-data" action='{{ url_for("main.upload") }}'>
+    <div class="input-group">
+      <input type="file" class="form-control" name="file" aria-label="Upload">
+      <button class="btn btn-outline-secondary" type="submit" >Submit</button>
+    </div>
+  </form>
 </h1>
 {% endblock %}

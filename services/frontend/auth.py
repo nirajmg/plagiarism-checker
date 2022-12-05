@@ -47,7 +47,8 @@ def signup_post():
     user = Users.query.filter_by(email=email).first()
 
     if user:
-        return redirect(url_for('auth.signup'))
+        flash('email exists', 'danger')
+        return redirect(url_for('auth.login'))
 
     new_user = Users(email=email, name=name,
                      password=generate_password_hash(password, method='sha256'))
