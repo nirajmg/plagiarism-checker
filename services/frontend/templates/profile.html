@@ -2,12 +2,57 @@
 
 {% block content %}
 <h1 class="title">
-  Welcome!
-  <form method="post" enctype="multipart/form-data" action='{{ url_for("main.upload") }}'>
-    <div class="input-group">
-      <input type="file" class="form-control" name="file" aria-label="Upload">
-      <button class="btn btn-outline-secondary" type="submit" >Submit</button>
-    </div>
-  </form>
+  
 </h1>
+
+
+  <div class="container py-5 h-100">
+    <div class="row d-flex justify-content-center align-items-center h-100">
+      <div class="col col-lg-9 col-xl-7">
+        <div class="card rounded-3">
+          <div class="card-body p-4">
+
+            <h4 class="text-center my-3 pb-3">Upload Files or Download Reports</h4>
+            <form method="post" enctype="multipart/form-data" action='{{ url_for("main.upload") }}'>
+              <div class="input-group">
+                
+                <input type="file" class="form-control" name="file" id="customFile" />
+                <div class="col-auto">
+                  <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                  </div>
+                </div>
+              </div>
+            </form>
+
+           
+
+            <table class="table mb-4">
+              
+              <tbody>
+                {% for item in data %}
+    
+                <tr>
+                  <td>{{item}}</td>
+                  <td>
+                    <form method="get" action="/download/{{item}}">
+                    <button  type="submit" class="btn btn-success ms-1">Download</button>
+                  </form>
+                  </td>
+                </tr>
+                {% endfor %}
+                
+              </tbody>
+            </table>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
 {% endblock %}
+
+

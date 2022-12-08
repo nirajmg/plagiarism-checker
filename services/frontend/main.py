@@ -24,7 +24,7 @@ def index():
 @main.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html', name=current_user.name)
+    return render_template('profile.html', name=current_user.name, data=listFiles())
 
 
 @main.route('/upload',methods=['POST'])
@@ -46,9 +46,15 @@ def upload():
     return redirect(url_for('main.profile'))
 
 
+@main.route('/download/<file>')
+@login_required
+def download(file):
+    object_name =   f'{current_user.email}/files/{secure_filename(file)}'
+    url = client.presigned_get_object(bucket, object_name=object_name)
+    return redirect(url)
 
-
-
+def listFiles():
+    return [os.path.basename(o.object_name) for o in client.list_objects(bucket, prefix=f'{current_user.email}/files/')]
 
 
    

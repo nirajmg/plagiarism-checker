@@ -23,7 +23,7 @@ build-cloudfunc:
 	cd functions/storage && pip3 install -r requirements.txt 
 
 build-frontend:
-	cd services/WebUI && pip3 install -r requirements.txt 
+	cd services/frontend && pip3 install -r requirements.txt 
 
 deploy-bucket:
 	gsutil mb -l $(REGION) gs://$(BUCKET)
@@ -44,7 +44,7 @@ deploy-pubsub:
 	gcloud pubsub topics create $(TOPIC) --message-retention-duration=1d
 
 
-clean:
+clean: 
 	gcloud storage rm --recursive gs://$(BUCKET)/
 	gcloud pubsub topics delete $(TOPIC)
 	gcloud functions delete $(CLOUD_FUNC_NAME) --gen2 --region=$(REGION)
@@ -53,4 +53,8 @@ clean:
 helm:
 	helm install postgresql infra/postgresql
 	# all services will be deployed here 
+
+
+requirements:
+	cd services/frontend && python3 -m pigar -p requirements.txt -P .
 	
