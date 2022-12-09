@@ -3,33 +3,38 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
 import psycopg2
 from flask_login import LoginManager
-
+import os 
 # init SQLAlchemy so we can use it later in our models
 db = SQLAlchemy()
-
+host = os.getenv('PQ_HOST', "localhost")
+port = os.getenv('PQ_PORT', "5432")
+user = os.getenv('PQ_USER', "root")
+passWd = os.getenv('PQ_PASS', "root")
+pqdb = os.getenv('PQ_DB', "mydb")
 
 def create_app():
     global app
     app = Flask(__name__)
 
-    url = 'postgresql://root:root@localhost:5432/mydb'
+    url = f'postgresql://{user}:{passWd}@{host}:{port}/{pqdb}'
     app.config['SECRET_KEY'] = 'secret-key-goes-here'
 
     app.config['SQLALCHEMY_DATABASE_URI'] = url
-
     db.init_app(app)
     try:
         conn = psycopg2.connect(
-            database="mydb", user="root", password="root", host="localhost", port="5432")
-    except:
-        print("I am unable to connect to the database")
+            database=pqdb, user=user, password=passWd, host=host, port=port)
+    except Exception as e:
+        print(e)
+        exit(0) 
 
     cur = conn.cursor()
     try:
         cur.execute(
-            "CREATE TABLE Users (id serial PRIMARY KEY, name varchar, email varchar, password varchar);")
-    except:
-        print("I can't drop our test database!")
+            "CREATE TABLE IF NOT EXISTS Users (id serial PRIMARY KEY, name varchar, email varchar, password varchar);")
+    except Exception as e:
+        print(e)
+        exit(0) 
 
     conn.commit()  # <--- makes sure the change is shown in the database
     conn.close()

@@ -2,12 +2,11 @@ VERSION=v1
 PROJECT_ID=plagiarism-368919
 PROJECT_NUMBER=$(shell gcloud projects list --filter="project_id:$(PROJECT_ID)" --format='value(project_number)')
 SERVICE_ACCOUNT=$(shell gsutil kms serviceaccount -p $(PROJECT_NUMBER))
-
-
+DOCKERUSER=us-west3-docker.pkg.dev/plagiarism-368919/plagiarism
 BUCKET=plagiarism-ingestion
 CLOUD_FUNC_NAME=storage-trigger-function
 TOPIC=plagiarism-tasks
-CLUSTER=plagiarism-cluster
+CLUSTER=cluster-2
 REGION=us-west3
 
 all: login clean build infra
@@ -23,7 +22,7 @@ build-cloudfunc:
 	cd functions/storage && pip3 install -r requirements.txt 
 
 build-frontend:
-	cd services/frontend && pip3 install -r requirements.txt 
+	cd services/frontend && gcloud builds submit --tag $(DOCKERUSER)/frontend . 
 
 deploy-bucket:
 	gsutil mb -l $(REGION) gs://$(BUCKET)
@@ -57,4 +56,10 @@ helm:
 
 requirements:
 	cd services/frontend && python3 -m pigar -p requirements.txt -P .
-	
+
+deploy-cluster:
+	gcloud container clusters get-credentials $(CLUSTER) --zone us-west3-a --project $(PROJECT_ID)
+	gcloud container clusters update $(CLUSTER) --update-addons=HttpLoadBalancing=ENABLED  --zone us-west3-a
+	kubectl create secret generic credentials --from-env-file .env
+	helm install postgresql infra/postgresql
+	kubectl apply -f infra/frontend

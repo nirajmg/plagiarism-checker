@@ -1,8 +1,6 @@
 from flask import Blueprint, Flask, render_template, request,flash,redirect, url_for
 from flask_login import login_required, current_user
-from datetime import timedelta
 from minio import Minio
-import json 
 from werkzeug.utils import secure_filename
 import os 
 
@@ -10,13 +8,16 @@ main = Blueprint('main', __name__)
 
 bucket = os.getenv('BUCKET', "plagiarism-ingestion")
 s3Src = os.getenv('S3_SRC', "storage.googleapis.com")
-secretId = os.getenv('SECRET_ID', "")
-secretKey = os.getenv('SECRET_KEY', "")
+secretId = os.getenv('SECRET_ID', "GOOG7JBEJ7GU76OUS5HTT4RI")
+secretKey = os.getenv('SECRET_KEY', "CV18bXT9flzceG2RVt6TN0AvgS13cuuR6wNfX4Nv")
 
 client = Minio(s3Src, access_key=secretId, secret_key=secretKey)
 
 
-@main.route('/')
+@main.route('/', methods=['GET'])
+def health(): return "active"
+
+@main.route('/index')
 def index():
     return render_template('index.html')
 

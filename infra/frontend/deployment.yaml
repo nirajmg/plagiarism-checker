@@ -14,14 +14,23 @@ spec:
     spec:
       containers:
       - name: master
-        image: us-west3-docker.pkg.dev/lab5-364722/lab7/demucs-rest
+        image: us-west3-docker.pkg.dev/plagiarism-368919/plagiarism/frontend
+        imagePullPolicy: Always
         envFrom:
         - secretRef:
             name: credentials
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
         resources:
           requests:
             cpu: 100m
             memory: 400Mi
         ports:
-        - containerPort: 8080
+        - containerPort: 80
 ---

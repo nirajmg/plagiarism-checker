@@ -14,8 +14,7 @@ spec:
   type: NodePort
   ports:
     - protocol: "TCP"
-      port: 5000
-      nodePort: 30005
-      targetPort: 5000
+      port: 80
+      targetPort: 80
   selector:
     app: frontend
