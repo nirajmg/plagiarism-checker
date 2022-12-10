@@ -1,5 +1,5 @@
 VERSION=v1
-PROJECT_ID=itsmevrr-1107   
+PROJECT_ID=plagiarism-368919   
 PROJECT_NUMBER=$(shell gcloud projects list --filter="project_id:$(PROJECT_ID)" --format='value(project_number)')
 SERVICE_ACCOUNT=$(shell gsutil kms serviceaccount -p $(PROJECT_NUMBER))
 DOCKERUSER=us-west3-docker.pkg.dev/plagiarism-368919/plagiarism
@@ -25,7 +25,8 @@ build-cloudfunc:
 	cd functions/storage && pip3 install -r requirements.txt 
 
 build-frontend:
-	cd services/frontend && gcloud builds submit --tag $(DOCKERUSER)/frontend . 
+	cd services/frontend && gcloud builds submit --tag $(DOCKERUSER)/frontend .
+	cd services/reports && gcloud builds submit --tag $(DOCKERUSER)/reports . 
 
 deploy-bucket:
 	
@@ -70,3 +71,4 @@ deploy-cluster:
 	kubectl create secret generic credentials --from-env-file .env
 	helm install postgresql infra/postgresql
 	kubectl apply -f infra/frontend
+	kubectl apply -f infra/reports
