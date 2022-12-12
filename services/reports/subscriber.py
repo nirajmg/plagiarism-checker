@@ -34,8 +34,15 @@ def callback(message):
     client.fget_object(bucket, file_name, local_file)
     f = open(f'{local_file}.html', 'w')
 
-    headerText = "<!DOCTYPE html><html>"
-    endText = "</html></body>"
+    headerText = "<!DOCTYPE html>\
+        <html lang=\"en\">\
+        <head>\
+        <title>Plagiarism Report </title>\
+	    <link rel=\"stylesheet\" href=\"plagiarism.css\">\
+        </head>\
+        <body data-spy=\"scroll\" data-target=\".navbar\" data-offset=\"40\" id=\"home\" class=\"dark-theme\">"
+    endText = "</div></body></html>"
+    enclosingText = "<div class=\"page-container\">"
     htmlText = ""
     with open(local_file) as fp:
         for line in fp:
@@ -54,11 +61,15 @@ def callback(message):
                         queryHTML = "<p style='color:red'>" + \
                             details[idx]['query'] + "</p>"
                         htmlText += queryHTML
-    plagiarismPercentage = f'The plagiarism percentage is {uniquePercent//count}%'
+    plagiarismPercentage = f'The overall uniqueness percentage of the document is {uniquePercent//count}%'
     fp.close()
 
-    result = headerText + \
-        f"<h2>{plagiarismPercentage}</h2>" + htmlText + endText
+    reportText = f"<header>\
+        <h1 class=\"header-title\">Plagiarism Report Generation</h1>\
+        <br />\
+        <h3 class=\"header-percent\">{plagiarismPercentage}</h3>\
+        </header>"
+    result = headerText + reportText + enclosingText + htmlText + endText
     f.write(result)
     f.close()
 
