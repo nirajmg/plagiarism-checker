@@ -20,18 +20,17 @@ login:
 cluster:
 	gcloud container clusters create $(CLUSTER) --region=$(REGION)
 
-build: build-cloudfunc
+build: build-cloudfunc build-services
 
 infra: deploy-pubsub deploy-bucket deploy-cloudfunc 
 
 build-cloudfunc:
 	cd functions/storage && pip3 install -r requirements.txt 
 
-build-frontend:
-	#cd services/frontend && gcloud builds submit --tag $(DOCKERUSER)/frontend .
+build-services:
+	cd services/frontend && gcloud builds submit --tag $(DOCKERUSER)/frontend .
 	cd services/process && gcloud builds submit --tag $(DOCKERUSER)/process .
-	
-	#cd services/reports && gcloud builds submit --tag $(DOCKERUSER)/reports . 
+	cd services/reports && gcloud builds submit --tag $(DOCKERUSER)/reports . 
 
 deploy-bucket:
 	gsutil mb -l $(REGION) gs://$(BUCKET)

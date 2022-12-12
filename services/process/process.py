@@ -41,7 +41,6 @@ def callback(message):
 		for para in doc.paragraphs:
 			form_data= dict()
 			if para.text=='': continue
-			print(para.text)
 			form_data['key'] = key
 			form_data['data'] =para.text
 			r = requests.post(url, data=form_data)
@@ -63,9 +62,10 @@ def callback(message):
 		return 
 
 	user=file_name.split('/')[0]
-	object_name = f'{user}/raw/{local_file}.json'
+	object_name = f'{user}/raw/{local_file}'
 	result = client.fput_object(bucket, object_name, f'{local_file}.json') 
 	os.remove(local_file)
+	os.remove(f'{local_file}.json')
 	message.ack()
 
 

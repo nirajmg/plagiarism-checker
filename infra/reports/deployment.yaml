@@ -6,7 +6,7 @@ spec:
   selector:
     matchLabels:
       app: reports
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       labels:
@@ -15,9 +15,11 @@ spec:
       containers:
       - name: master
         image: us-west3-docker.pkg.dev/plagiarism-368919/plagiarism/reports
+        imagePullPolicy: Always
+        envFrom:
+        - secretRef:
+            name: credentials
         resources:
           requests:
             cpu: 500m
-            memory: 1024Gi
-
----
+            memory: 1024Mi
