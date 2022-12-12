@@ -5,8 +5,11 @@ SERVICE_ACCOUNT=$(shell gsutil kms serviceaccount -p $(PROJECT_NUMBER))
 DOCKERUSER=us-west3-docker.pkg.dev/plagiarism-368919/plagiarism
 BUCKET=plagiarism-ingestion
 CLOUD_FUNC_NAME=storage-trigger-function
-TOPIC=plagiarism-tasks
-CLUSTER=cluster-2
+TOPIC_RAW=plagiarism-raw
+TOPIC_REPORTS=plagiarism-reports
+SUBSCRIBER_RAW=plagiarism-raw-sub
+SUBSCRIBER_REPORTS=plagiarism-reports-sub
+CLUSTER=cluster-1
 REGION=us-west3
 
 all: login cluster clean build infra
@@ -25,14 +28,16 @@ build-cloudfunc:
 	cd functions/storage && pip3 install -r requirements.txt 
 
 build-frontend:
-	cd services/frontend && gcloud builds submit --tag $(DOCKERUSER)/frontend .
-	cd services/reports && gcloud builds submit --tag $(DOCKERUSER)/reports . 
+	#cd services/frontend && gcloud builds submit --tag $(DOCKERUSER)/frontend .
+	cd services/process && gcloud builds submit --tag $(DOCKERUSER)/process .
+	
+	#cd services/reports && gcloud builds submit --tag $(DOCKERUSER)/reports . 
 
 deploy-bucket:
-	
-	gcloud functions add-iam-policy-binding $(CLOUD_FUNC_NAME) --gen2 \
-	--region=$(REGION)\
-	--role roles/pubsub.publisher
+	gsutil mb -l $(REGION) gs://$(BUCKET)
+ 	gcloud projects add-iam-policy-binding $(PROJECT_ID) \
+ 	--member serviceAccount:$(SERVICE_ACCOUNT) \
+ 	--role roles/pubsub.publisher --role roles/eventarc.eventReceiver
 
 deploy-cloudfunc:
 	gcloud services enable run.googleapis.com
@@ -47,13 +52,17 @@ deploy-cloudfunc:
  	
 
 deploy-pubsub:
-	gcloud pubsub topics create $(TOPIC) --message-retention-duration=1d && \
-	gcloud pubsub subscriptions create $(SUBSCRIBER) --topic=$(TOPIC)
+	gcloud pubsub topics create $(TOPIC_RAW) --message-retention-duration=1d && \
+	gcloud pubsub subscriptions create $(SUBSCRIBER_RAW) --topic=$(TOPIC_RAW)
+	gcloud pubsub topics create $(TOPIC_REPORTS) --message-retention-duration=1d && \
+	gcloud pubsub subscriptions create $(SUBSCRIBER_REPORTS) --topic=$(TOPIC_REPORTS)
 
 clean: 
 	gcloud storage rm --recursive gs://$(BUCKET)/
-	gcloud pubsub topics delete $(TOPIC)
-	gcloud pubsub subscriptions delete $(SUBSCRIBER)
+	gcloud pubsub topics delete $(TOPIC_RAW)
+	gcloud pubsub subscriptions delete $(SUBSCRIBER_RAW)
+	gcloud pubsub topics delete $(TOPIC_REPORTS)
+	gcloud pubsub subscriptions delete $(SUBSCRIBER_REPORTS)
 	gcloud functions delete $(CLOUD_FUNC_NAME) --gen2 --region=$(REGION)
 	gcloud container clusters delete $(CLUSTER) --region=$(REGION)
 	helm delete postgresql
@@ -71,4 +80,4 @@ deploy-cluster:
 	kubectl create secret generic credentials --from-env-file .env
 	helm install postgresql infra/postgresql
 	kubectl apply -f infra/frontend
-	kubectl apply -f infra/reports
+	#kubectl apply -f infra/reports

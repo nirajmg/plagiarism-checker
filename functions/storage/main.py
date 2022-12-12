@@ -40,14 +40,29 @@ def process_trigger(cloud_event):
     print(f"Updated: {updated}")
     publisher = pubsub_v1.PublisherClient()
     try:
-        testAttribute = name
-        topic_name = 'projects/plagiarism-368919/topics/plagiarism-tasks'.format(
-            project_id=os.getenv('GOOGLE_CLOUD_PROJECT'),
-            topic='plagiarism-tasks',
-        )
-        publisher.publish(topic_name, b'', testAttribute=testAttribute)
-        print("published")
-    except:
-        print("Failed to publish")
+        reports_topic = "plagiarism-reports"
+        raw_topic = "plagiarism-raw"
 
+        if "files" in name: 
+            raw_topic = f'projects/plagiarism-368919/topics/{raw_topic}'
+            print(f'Publishing to raw queue {raw_topic}')
+            topic_name = raw_topic.format(
+                project_id=os.getenv('GOOGLE_CLOUD_PROJECT'),
+                topic=raw_topic,
+            )
+        elif "raw" in name: 
+            
+            reports_queue = f'projects/plagiarism-368919/topics/{reports_topic}'
+            print(f'Publishing to reports queue {reports_queue}')
+            topic_name = reports_queue.format(
+                project_id=os.getenv('GOOGLE_CLOUD_PROJECT'),
+                topic=reports_topic,
+            )
+        else: 
+            print("Skipping file")
+            return 
+        publisher.publish(topic_name, bytes(name, 'utf-8'), fileName=name)
+        print("published")
+    except  Exception as e:
+        print("Failed to publish", e )
 

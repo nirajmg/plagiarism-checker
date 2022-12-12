@@ -1,16 +1,12 @@
 import os
 from minio import Minio
 from google.cloud import pubsub_v1
-import PyPDF2
 import os
-from google.cloud import pubsub_v1
-import json
-from minio import Minio
-import random
-import string
 import requests 
+import docx 
+import pdfplumber 
 
-credentialsPath = 'plagiarism-check.privatekey.json'
+credentialsPath = 'key.json'
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentialsPath
 
 subscriber = pubsub_v1.SubscriberClient()
@@ -27,8 +23,8 @@ subscriberPath = f'projects/{project}/subscriptions/{subscription}'
 
 client = Minio(s3Src, access_key=secretId, secret_key=secretKey)
 
-url = os.getenv('PL_URL', "")
-key = os.getenv('API_KEY', "")
+url = os.getenv('PL_URL', "https://www.check-plagiarism.com/apis/checkPlag")
+key = os.getenv('API_KEY', "422ccf1360520da2957f319bdd10246f")
 
 
 def callback(message):
@@ -38,33 +34,42 @@ def callback(message):
 	
 	local_file = os.path.basename(file_name)
 	client.fget_object(bucket, file_name,local_file)
-	
-	pdffile = open(local_file, mode='rb')
-	pdfdoc = PyPDF2.PdfFileReader(pdffile)
-
 	json_file = open(f'{local_file}.json', 'a+')
 
-	for i in range(pdfdoc.numPages):
-		current_page = pdfdoc.getPage(i)
-		print("===================")
-		print("Page NO:" + str(i + 1))
-		print("===================")
-		text_to_be_sent= current_page.extractText()
-		form_data= dict()
-		form_data['key'] = key
-		form_data['data'] =text_to_be_sent
+	if local_file.endswith('.docx'):
+		doc = docx.Document(local_file)
+		for para in doc.paragraphs:
+			form_data= dict()
+			if para.text=='': continue
+			print(para.text)
+			form_data['key'] = key
+			form_data['data'] =para.text
+			r = requests.post(url, data=form_data)
+			if r.status_code==200 :
+				json_file.write(r.content.decode("utf-8"))
+				json_file.write('\n')
+	elif local_file.endswith('.pdf'):
+		pdfdoc= pdfplumber.open(local_file)
+		for i in range(len(pdfdoc.pages)):
+			current_page = pdfdoc.pages[i]
+			text_to_be_sent= current_page.extract_text()
+			form_data= dict()
+			form_data['key'] = key
+			form_data['data'] =text_to_be_sent
+			r = requests.post(url, data=form_data)
+			json_file.write(r.content.decode('utf-8'))
+			json_file.write('\n')
+	else: 
+		return 
 
-		r = requests.post(url, data=form_data)
-		json_file.write(r.text)
-
-	
 	user=file_name.split('/')[0]
-	object_name = f'{user}/raw/{local_file}'
-	result = client.fput_object(bucket, object_name, json_file) 
-	os.remove(json_file)
+	object_name = f'{user}/raw/{local_file}.json'
+	result = client.fput_object(bucket, object_name, f'{local_file}.json') 
+	os.remove(local_file)
+	message.ack()
 
 
-# subscribe method provides an asynchronous interface for processing its callback
+#subscribe method provides an asynchronous interface for processing its callback
 streaming_pull_future = subscriber.subscribe(subscriberPath, callback=callback)
 with subscriber:                                           # wrap subscriber in a 'with' block to automatically call close() when done
     try:

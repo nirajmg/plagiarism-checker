@@ -1,23 +1,27 @@
 apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
 kind: Deployment
 metadata:
-  name: reports
+  name: file-processor
 spec:
   selector:
     matchLabels:
-      app: reports
-  replicas: 1
+      app: file-processor
+  replicas: 3
   template:
     metadata:
       labels:
-        app: reports
+        app: file-processor
     spec:
       containers:
       - name: master
-        image: us-west3-docker.pkg.dev/plagiarism-368919/plagiarism/reports
+        image: us-west3-docker.pkg.dev/plagiarism-368919/plagiarism/process
+        imagePullPolicy: Always
+        envFrom:
+        - secretRef:
+            name: credentials
         resources:
           requests:
             cpu: 500m
-            memory: 1024Gi
+            memory: 1024Mi
 
 ---

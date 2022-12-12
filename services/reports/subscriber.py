@@ -11,7 +11,7 @@ credentialsPath = 'plagiarism-check.privatekey.json'
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentialsPath
 
 subscriber = pubsub_v1.SubscriberClient()
-subscriberPath = 'projects/plagiarism-368919/subscriptions/plagiarism-tasks-sub'
+subscriberPath = 'projects/plagiarism-368919/subscriptions/plagiarism-reports-sub'
 fileName = (''.join(random.choices(string.ascii_letters, k=5)))+'.html'
 
 bucket = os.getenv('BUCKET', "plagiarism-ingestion1107")
