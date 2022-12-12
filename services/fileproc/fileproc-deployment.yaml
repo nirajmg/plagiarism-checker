@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fileproc
+spec:
+  selector:
+    matchLabels:
+      app: fileproc
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: fileproc
+    spec:
+      containers:
+      - name: fileproc
+        image: tejas1812/fileproc:v5
+        resources:
+          requests:
+            cpu: 500m
+            memory: 4Gi
+        env:
+        - name: REDIS_HOST
+          value: "redis"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: MINIO_HOST
+          value: "minio:9000"
+        - name: PYTHONUNBUFFERED
+          value: "1"
