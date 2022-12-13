@@ -13,8 +13,8 @@ subscriber = pubsub_v1.SubscriberClient()
 
 bucket = os.getenv('BUCKET', "plagiarism-ingestion")
 s3Src = os.getenv('S3_SRC', "storage.googleapis.com")
-secretId = os.getenv('SECRET_ID', "GOOG7JBEJ7GU76OUS5HTT4RI")
-secretKey = os.getenv('SECRET_KEY', "CV18bXT9flzceG2RVt6TN0AvgS13cuuR6wNfX4Nv")
+secretId = os.getenv('SECRET_ID', "")
+secretKey = os.getenv('SECRET_KEY', "")
 project = os.getenv('PROJECT', "plagiarism-368919")
 subscription = os.getenv('SUBSCRIBER_RAW', "plagiarism-raw-sub")
 subscriberPath = f'projects/{project}/subscriptions/{subscription}'
@@ -24,7 +24,7 @@ subscriberPath = f'projects/{project}/subscriptions/{subscription}'
 client = Minio(s3Src, access_key=secretId, secret_key=secretKey)
 
 url = os.getenv('PL_URL', "https://www.check-plagiarism.com/apis/checkPlag")
-key = os.getenv('API_KEY', "422ccf1360520da2957f319bdd10246f")
+key = os.getenv('API_KEY', "")
 
 
 def callback(message):

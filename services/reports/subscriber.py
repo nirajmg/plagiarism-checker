@@ -14,8 +14,8 @@ subscriberPath = 'projects/plagiarism-368919/subscriptions/plagiarism-reports-su
 
 bucket = os.getenv('BUCKET', "plagiarism-ingestion")
 s3Src = os.getenv('S3_SRC', "storage.googleapis.com")
-secretId = os.getenv('SECRET_ID', "GOOG7JBEJ7GU76OUS5HTT4RI")
-secretKey = os.getenv('SECRET_KEY', "CV18bXT9flzceG2RVt6TN0AvgS13cuuR6wNfX4Nv")
+secretId = os.getenv('SECRET_ID', "")
+secretKey = os.getenv('SECRET_KEY', "")
 
 project = os.getenv('PROJECT', "plagiarism-368919")
 subscription = os.getenv('SUBSCRIBER', "plagiarism-reports-sub")
